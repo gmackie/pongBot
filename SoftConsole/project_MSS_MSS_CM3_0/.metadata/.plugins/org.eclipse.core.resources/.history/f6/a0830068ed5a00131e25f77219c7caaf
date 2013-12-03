@@ -1,0 +1,138 @@
+/*
+ * lcd.h
+ *
+ *  Created on: Dec 1, 2013
+ *      Author: ajaeckel
+ */
+
+#ifndef LCD_H_
+#define LCD_H_
+
+void LCDinit(){
+	uint8_t clearScreen[2] = {0x7C, 0x00};
+	uint8_t powerLoc[6] = {0x7C, 0x18, 6, 0x7C, 0x19, 120};
+	uint8_t powerText[5] = "Power";
+	uint8_t yawLoc[6] = {0x7C, 0x18, 30, 0x7C, 0x19, 42};
+	uint8_t yawText[3] = "Yaw";
+	uint8_t pitchLoc[6] = {0x7C, 0x18, 46, 0x7C, 0x19, 120};
+	uint8_t pitchText[5] = "Pitch";
+	MSS_UART_init(&g_mss_uart1, MSS_UART_115200_BAUD, MSS_UART_DATA_8_BITS | MSS_UART_NO_PARITY | MSS_UART_ONE_STOP_BIT);
+	MSS_UART_polled_tx( &g_mss_uart1, clearScreen, sizeof(clearScreen) );
+	MSS_UART_polled_tx( &g_mss_uart1, clearScreen, sizeof(clearScreen) );
+	MSS_UART_polled_tx( &g_mss_uart1, powerLoc, sizeof(powerLoc) );
+	MSS_UART_polled_tx( &g_mss_uart1, powerText, sizeof(powerText) );
+	MSS_UART_polled_tx( &g_mss_uart1, yawLoc, sizeof(yawLoc) );
+	MSS_UART_polled_tx( &g_mss_uart1, yawText, sizeof(yawText) );
+	MSS_UART_polled_tx( &g_mss_uart1, pitchLoc, sizeof(pitchLoc) );
+	MSS_UART_polled_tx( &g_mss_uart1, pitchText, sizeof(pitchText) );
+
+	drawBox(10, 26, 48, 110);
+	drawBox(50, 66, 48, 110);
+	drawBox(6, 70, 16, 32);
+	drawCups();
+}
+
+void drawCups(){
+	uint8_t circ[6] = {0x7C, 0x03, 0x60, 0x67, 0x07, 0x01};
+	MSS_UART_polled_tx( &g_mss_uart1, circ, sizeof(circ) );
+	circ[2] = 0x70;
+	MSS_UART_polled_tx( &g_mss_uart1, circ, sizeof(circ) );
+	circ[2] = 0x80;
+	MSS_UART_polled_tx( &g_mss_uart1, circ, sizeof(circ) );
+	circ[2] = 0x90;
+	MSS_UART_polled_tx( &g_mss_uart1, circ, sizeof(circ) );
+	circ[2] = 0x68;
+	circ[3] = 0x57;
+	MSS_UART_polled_tx( &g_mss_uart1, circ, sizeof(circ) );
+	circ[2] = 0x78;
+	MSS_UART_polled_tx( &g_mss_uart1, circ, sizeof(circ) );
+	circ[2] = 0x88;
+	MSS_UART_polled_tx( &g_mss_uart1, circ, sizeof(circ) );
+	circ[2] = 0x70;
+	circ[3] = 0x47;
+	MSS_UART_polled_tx( &g_mss_uart1, circ, sizeof(circ) );
+	circ[2] = 0x80;
+	MSS_UART_polled_tx( &g_mss_uart1, circ, sizeof(circ) );
+	circ[2] = 0x78;
+	circ[3] = 0x37;
+	MSS_UART_polled_tx( &g_mss_uart1, circ, sizeof(circ) );
+}
+
+void fillCup(uint8_t cupNum){
+	uint8_t x,y;
+	if (cupNum == 0 || cupNum == 4)
+		x = 0x78;
+	else if (cupNum == 1 || cupNum == 7)
+		x = 0x70;
+	else if (cupNum == 2 || cupNum == 8)
+		x = 0x80;
+	else if (cupNum == 3)
+		x = 0x68;
+	else if (cupNum == 5)
+		x = 0x88;
+	else if (cupNum == 6)
+		x = 0x60;
+	else if (cupNum == 9)
+		x = 0x90;
+
+	if (cupNum == 0)
+		y = 0x37;
+	else if (cupNum < 3)
+		y = 0x47;
+	else if (cupNum < 6)
+		y = 0x57;
+	else
+		y = 0x67;
+
+	uint8_t circ[6] = {0x7C, 0x03, x, y, 0x07, 0x01};
+	volatile uint8_t i = 0x06;
+	for (i; i;){
+		circ[4] = i--;
+		MSS_UART_polled_tx( &g_mss_uart1, circ, sizeof(circ) );
+	}
+
+}
+
+void drawBox(uint8_t x1, uint8_t x2, uint8_t y1, uint8_t y2){
+	uint8_t line1[7] = { 0x7C, 0x0C, x1, y1, x2, y1, 1};
+	uint8_t line2[7] = { 0x7C, 0x0C, x1, y2, x2, y2, 1};
+	uint8_t line3[7] = { 0x7C, 0x0C, x1, y1, x1, y2, 1};
+	uint8_t line4[7] = { 0x7C, 0x0C, x2, y1, x2, y2, 1};
+	MSS_UART_polled_tx( &g_mss_uart1, line1, sizeof(line1) );
+	MSS_UART_polled_tx( &g_mss_uart1, line2, sizeof(line2) );
+	MSS_UART_polled_tx( &g_mss_uart1, line3, sizeof(line3) );
+	MSS_UART_polled_tx( &g_mss_uart1, line4, sizeof(line4) );
+}
+
+void fillBar(uint8_t prev, uint8_t curr, uint8_t barNum){
+	volatile uint8_t x1,x2,y1,y2;
+	volatile uint8_t i = 0;
+
+	if (barNum == 0){
+		x1 = 11;
+		x2 = 25;
+	}
+	else if (barNum == 1){
+		x1 = 51;
+		x2 = 65;
+	}
+	else if (barNum == 2){
+		y1 = 15;
+		y2 = 31;
+	}
+
+	if (prev < curr)
+		while ((prev + i++) < curr){
+			uint8_t fullBar[7] = {0x7C, 0x0C, x1, prev + i, x2, prev + i, 1};
+			MSS_UART_polled_tx( &g_mss_uart1, fullBar, sizeof(fullBar) );
+		}
+	else if (curr < prev){
+		while ((curr + i++) < prev){
+			uint8_t emptyBar[7] = {0x7C, 0x0C, x1, curr + i, x2, curr + i, 0x00};
+			MSS_UART_polled_tx( &g_mss_uart1, emptyBar, sizeof(emptyBar) );
+		}
+	}
+}
+
+
+#endif /* LCD_H_ */

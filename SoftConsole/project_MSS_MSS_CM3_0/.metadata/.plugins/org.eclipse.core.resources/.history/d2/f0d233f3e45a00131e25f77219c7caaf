@@ -1,0 +1,38 @@
+/*
+ * lcd.h
+ *
+ *  Created on: Dec 1, 2013
+ *      Author: ajaeckel
+ */
+
+#ifndef LCD_H_
+#define LCD_H_
+
+void drawBox(uint8_t x1, uint8_t x2, uint8_t y1, uint8_t y2){
+	uint8_t line1[7] = { 0x7C, 0x0C, x1, y1, x2, y1, 1};
+	uint8_t line2[7] = { 0x7C, 0x0C, x1, y2, x2, y2, 1};
+	uint8_t line3[7] = { 0x7C, 0x0C, x1, y1, x1, y2, 1};
+	uint8_t line4[7] = { 0x7C, 0x0C, x2, y1, x2, y2, 1};
+	MSS_UART_polled_tx( &g_mss_uart1, line1, sizeof(line1) );
+	MSS_UART_polled_tx( &g_mss_uart1, line2, sizeof(line2) );
+	MSS_UART_polled_tx( &g_mss_uart1, line3, sizeof(line3) );
+	MSS_UART_polled_tx( &g_mss_uart1, line4, sizeof(line4) );
+}
+
+void fillPower(uint8_t prev, uint8_t curr){
+	volatile uint8_t i = 0;
+	if (prev < curr)
+		while ((prev + i++) < curr){
+			uint8_t fullPowerBox[7] = {0x7C, 0x0C, 41, prev + i, 55, prev + i, 1};
+			MSS_UART_polled_tx( &g_mss_uart1, fullPowerBox, sizeof(fullPowerBox) );
+		}
+	else if (curr < prev){
+		while ((curr + i++) < prev){
+			uint8_t emptyPowerBox[7] = {0x7C, 0x0C, 41, curr + i, 55, curr + i, 0x00};
+			MSS_UART_polled_tx( &g_mss_uart1, emptyPowerBox, sizeof(emptyPowerBox) );
+		}
+	}
+}
+
+
+#endif /* LCD_H_ */

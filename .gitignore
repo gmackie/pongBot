@@ -1,0 +1,9 @@
+designer/
+simulation/
+synthesis/
+viewdraw/
+component/
+firmware/
+smartgen/
+tooldata/
+*.prjx
